@@ -1,34 +1,45 @@
 import os
 from dotenv import load_dotenv
 
-from pinecone import Pinecone, ServerlessSpec
-from sentence_transformers import SentenceTransformer
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 load_dotenv()
 
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-
-if not PINECONE_API_KEY:
-    raise ValueError("PINECONE_API_KEY not found in environment")
-
-pc = Pinecone(api_key=PINECONE_API_KEY)
-
-INDEX_NAME = os.getenv("PINECONE_INDEX", "sql-agent")
-
-embedding_model = SentenceTransformer(
-    "sentence-transformers/all-MiniLM-L6-v2"
-)
-
 EMBEDDING_DIMENSION = 384
+
+_embedding_model = None
+_pc = None
+_INDEX_NAME = None
+
+
+def init_embedding_model():
+    global _embedding_model
+    from sentence_transformers import SentenceTransformer
+    _embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    print("SentenceTransformer loaded")
+
+
+def _get_pinecone():
+    global _pc, _INDEX_NAME
+    if _pc is None:
+        from pinecone import Pinecone
+        api_key = os.getenv("PINECONE_API_KEY")
+        if not api_key:
+            raise ValueError("PINECONE_API_KEY not found in environment")
+        _pc = Pinecone(api_key=api_key)
+        _INDEX_NAME = os.getenv("PINECONE_INDEX", "sql-agent")
+    return _pc, _INDEX_NAME
 
 
 def get_index():
+    pc, index_name = _get_pinecone()
+    from pinecone import ServerlessSpec
+
     existing_indexes = [idx.name for idx in pc.list_indexes()]
 
-    if INDEX_NAME not in existing_indexes:
+    if index_name not in existing_indexes:
         pc.create_index(
-            name=INDEX_NAME,
+            name=index_name,
             dimension=EMBEDDING_DIMENSION,
             metric="cosine",
             spec=ServerlessSpec(
@@ -37,12 +48,14 @@ def get_index():
             )
         )
 
-    return pc.Index(INDEX_NAME)
+    return pc.Index(index_name)
 
 
 def embed_text(text):
-    text=str(text)
-    return embedding_model.encode(text).tolist()
+    text = str(text)
+    if _embedding_model is None:
+        raise RuntimeError("Embedding model not initialized. Call init_embedding_model() first.")
+    return _embedding_model.encode(text).tolist()
 
 
 def upsert_documents(texts: list[str], namespace: str):

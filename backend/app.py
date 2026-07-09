@@ -1,4 +1,5 @@
-import os, uuid
+import os, uuid, threading
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -7,17 +8,39 @@ from typing import List, Optional
 from pypdf import PdfReader
 import io
 
-from SQLAgent import load_model, load_database, create_agent, ask_question
-from vectordb import upsert_documents, retrieve_context, delete_namespace
-
 from auth import get_current_user, github_callback, GITHUB_CLIENT_ID
 from database_models import SessionLocal, User, Playground
 
-app = FastAPI()
+
+def _load_models_background(app: FastAPI):
+    try:
+        from SQLAgent import load_model
+        from vectordb import init_embedding_model
+
+        model, model_info = load_model()
+        app.state.model = model
+        app.state.model_info = model_info
+
+        init_embedding_model()
+        app.state.models_ready = True
+        print(" Models loaded successfully")
+    except Exception as e:
+        print(f" Model loading failed: {e}")
+        app.state.model_load_error = str(e)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.models_ready = False
+    app.state.model_load_error = None
+    thread = threading.Thread(target=_load_models_background, args=(app,), daemon=True)
+    thread.start()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
-
-model, model_info = load_model()
 
 class AskRequest(BaseModel):
     question: str
@@ -44,6 +67,8 @@ def me(user: User = Depends(get_current_user)):
 
 @app.post("/playground/new")
 def new_playground(data: PlaygroundCreate, user: User = Depends(get_current_user)):
+    from SQLAgent import load_database
+
     try:
         load_database(data.db_url).get_table_names()
     except Exception as e:
@@ -75,6 +100,8 @@ def get_playground(pg_id: int, user: User = Depends(get_current_user)):
 
 @app.delete("/playground/{pg_id}")
 def delete_playground(pg_id: int, user: User = Depends(get_current_user)):
+    from vectordb import delete_namespace
+
     db = SessionLocal()
     pg = db.query(Playground).filter(Playground.id == pg_id, Playground.user_id == user.id).first()
     if not pg:
@@ -96,6 +123,8 @@ async def ingest(
     files: List[UploadFile] = File(default=[]),
     user: User = Depends(get_current_user)
 ):
+    from vectordb import upsert_documents
+
     db = SessionLocal()
     pg = db.query(Playground).filter(Playground.id == playground_id, Playground.user_id == user.id).first()
     if not pg:
@@ -121,6 +150,12 @@ async def ingest(
 
 @app.post("/ask")
 async def ask(req: AskRequest, user: User = Depends(get_current_user)):
+    from SQLAgent import load_database, create_agent, ask_question
+    from vectordb import retrieve_context
+
+    if not getattr(app.state, "models_ready", False):
+        raise HTTPException(503, "Models are still loading. Please try again shortly.")
+
     db = SessionLocal()
     pg = db.query(Playground).filter(Playground.id == req.playground_id, Playground.user_id == user.id).first()
     db.close()
@@ -129,6 +164,7 @@ async def ask(req: AskRequest, user: User = Depends(get_current_user)):
     try:
         database = load_database(pg.db_url)
         doc_context = retrieve_context(req.question, pg.namespace)
+        model = app.state.model
         agent = create_agent(model, database, doc_context=doc_context, user_context=pg.context or "")
         answer = ask_question(agent, req.question)
         return {"answer": answer, "playground": pg.name}
@@ -137,7 +173,21 @@ async def ask(req: AskRequest, user: User = Depends(get_current_user)):
 
 @app.get("/")
 def root():
-    return {"status": "ok", "model": model_info}
+    ready = getattr(app.state, "models_ready", False)
+    model_info = getattr(app.state, "model_info", None)
+    error = getattr(app.state, "model_load_error", None)
+    return {
+        "status": "ok" if ready else "loading",
+        "models_ready": ready,
+        "model": model_info or {"status": "loading"},
+        **({
+            "error": error
+        } if error else {})
+    }
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
 
 if __name__ == "__main__":
     import uvicorn
