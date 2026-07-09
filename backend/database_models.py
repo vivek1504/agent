@@ -7,8 +7,12 @@ import os
 load_dotenv()
 
 Base = declarative_base()
+db_url = os.getenv('DATABASE_URL', '')
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
 engine = create_engine(
-    os.getenv('DATABASE_URL'),
+    db_url,
     pool_pre_ping=True,
     pool_recycle=1800,
     pool_size=5,

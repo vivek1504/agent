@@ -22,6 +22,8 @@ def load_model():
         return ChatGroq(model=m, temperature=0), {"model": m, "provider": "groq"}
 
 def load_database(db_url: str):
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
     return SQLDatabase.from_uri(db_url)
 
 def _escape_braces(text: str) -> str:
