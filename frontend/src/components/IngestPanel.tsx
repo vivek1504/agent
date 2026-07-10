@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, X, FileText, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, X, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label, Textarea } from '@/components/ui/primitives';
 import { ingestService } from '@/services/api';
@@ -11,11 +11,6 @@ interface IngestPanelProps {
   playgroundId: number;
   initialContext?: string;
   onClose?: () => void;
-}
-
-function FileIcon({ name }: { name: string }) {
-  if (name.endsWith('.pdf')) return <FileText className="h-4 w-4 text-destructive" />;
-  return <FileText className="h-4 w-4 text-primary" />;
 }
 
 function formatBytes(bytes: number) {
@@ -74,22 +69,23 @@ export default function IngestPanel({ playgroundId, initialContext = '', onClose
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 20 }}
+      initial={{ opacity: 0, x: 12 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
+      exit={{ opacity: 0, x: 12 }}
+      transition={{ duration: 0.15 }}
       className="h-full flex flex-col"
     >
       <div className="flex items-center justify-between p-4 border-b border-border">
-        <h2 className="font-mono font-semibold text-sm">Ingest Documents</h2>
+        <h2 className="font-semibold text-sm">Ingest Documents</h2>
         {onClose && (
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
-            <X className="h-4 w-4" />
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors duration-100">
+            <X className="h-4 w-4" strokeWidth={1.5} />
           </button>
         )}
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-5">
-        {/* Drop zone */}
+        {/* Drop zone — minimalist dashed border */}
         <div>
           <Label className="mb-2 block">Documents (PDF, TXT, MD)</Label>
           <div
@@ -98,19 +94,19 @@ export default function IngestPanel({ playgroundId, initialContext = '', onClose
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
             className={cn(
-              'flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-6 py-8 cursor-pointer transition-all',
+              'flex flex-col items-center justify-center gap-3 border border-dashed px-6 py-10 cursor-pointer transition-colors duration-100',
               dragging
-                ? 'border-primary bg-primary/5'
-                : 'border-border hover:border-primary/40 hover:bg-muted/50'
+                ? 'border-foreground bg-muted/50'
+                : 'border-border hover:border-muted-foreground'
             )}
           >
-            <Upload className={cn('h-6 w-6 transition-colors', dragging ? 'text-primary' : 'text-muted-foreground')} />
+            <Upload className={cn('h-5 w-5 transition-colors duration-100', dragging ? 'text-foreground' : 'text-muted-foreground')} strokeWidth={1.5} />
             <div className="text-center">
-              <p className="text-xs font-mono text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Drag & drop or{' '}
-                <span className="text-primary hover:underline">browse files</span>
+                <span className="text-foreground underline underline-offset-4">browse files</span>
               </p>
-              <p className="text-xs font-mono text-muted-foreground/60 mt-1">
+              <p className="text-xs text-muted-foreground/60 mt-1">
                 PDF, TXT, MD — max 10 MB each
               </p>
             </div>
@@ -125,36 +121,33 @@ export default function IngestPanel({ playgroundId, initialContext = '', onClose
           </div>
         </div>
 
-        {/* File list */}
+        {/* File list — bracketed tags */}
         <AnimatePresence>
           {files.length > 0 && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="space-y-2"
+              className="flex flex-wrap gap-2"
             >
               {files.map((file, i) => (
                 <motion.div
                   key={file.name}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="flex items-center gap-3 rounded-lg bg-muted border border-border p-3"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.1, delay: i * 0.03 }}
+                  className="flex items-center gap-2 border border-border px-3 py-1.5 text-xs group"
                 >
-                  <div className="h-8 w-8 rounded bg-background border border-border flex items-center justify-center shrink-0">
-                    <FileIcon name={file.name} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-mono font-medium truncate">{file.name}</p>
-                    <p className="text-xs font-mono text-muted-foreground">{formatBytes(file.size)}</p>
-                  </div>
+                  <span className="text-muted-foreground font-mono">[</span>
+                  <span className="font-mono truncate max-w-[120px]">{file.name}</span>
+                  <span className="text-muted-foreground font-mono text-[10px]">{formatBytes(file.size)}</span>
+                  <span className="text-muted-foreground font-mono">]</span>
                   <button
                     type="button"
                     onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))}
-                    className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                    className="text-muted-foreground hover:text-foreground transition-colors duration-100 shrink-0"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-3 w-3" />
                   </button>
                 </motion.div>
               ))}
@@ -175,16 +168,17 @@ export default function IngestPanel({ playgroundId, initialContext = '', onClose
           />
         </div>
 
-        {/* Error */}
+        {/* Feedback */}
         <AnimatePresence>
           {error && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex items-center gap-2 text-xs font-mono text-destructive p-3 rounded-lg border border-destructive/20 bg-destructive/5"
+              transition={{ duration: 0.15 }}
+              className="flex items-center gap-2 text-xs p-3 border border-foreground text-foreground"
             >
-              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
               {error}
             </motion.div>
           )}
@@ -193,10 +187,11 @@ export default function IngestPanel({ playgroundId, initialContext = '', onClose
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex items-center gap-2 text-xs font-mono text-primary p-3 rounded-lg border border-primary/20 bg-primary/5"
+              transition={{ duration: 0.15 }}
+              className="flex items-center gap-2 text-xs p-3 border border-border text-foreground"
             >
-              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-              Documents ingested successfully!
+              <Check className="h-3.5 w-3.5 shrink-0" />
+              Documents ingested successfully
             </motion.div>
           )}
         </AnimatePresence>

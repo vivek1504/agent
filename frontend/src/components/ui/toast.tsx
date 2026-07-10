@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, XCircle, X } from 'lucide-react';
+import { Check, X as XIcon, AlertTriangle, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type ToastType = 'success' | 'error';
+export type ToastType = 'success' | 'error' | 'info';
 
 interface Toast {
   id: string;
@@ -16,6 +16,18 @@ interface ToastContextValue {
 }
 
 const ToastContext = React.createContext<ToastContextValue>({ toast: () => {} });
+
+const TOAST_ICONS = {
+  success: Check,
+  error: AlertTriangle,
+  info: Info,
+};
+
+const TOAST_STYLES = {
+  success: 'border-success/20 bg-success/5',
+  error: 'border-destructive/20 bg-destructive/5',
+  info: 'border-border bg-card',
+};
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = React.useState<Toast[]>([]);
@@ -31,29 +43,31 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm">
         <AnimatePresence>
-          {toasts.map((t) => (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className={cn(
-                'flex items-center gap-3 rounded-lg border px-4 py-3 text-sm font-mono shadow-lg',
-                t.type === 'success'
-                  ? 'bg-card border-primary/30 text-foreground'
-                  : 'bg-card border-destructive/30 text-foreground'
-              )}
-            >
-              {t.type === 'success'
-                ? <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                : <XCircle className="h-4 w-4 text-destructive shrink-0" />
-              }
-              <span className="flex-1">{t.message}</span>
-              <button onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))}>
-                <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-              </button>
-            </motion.div>
-          ))}
+          {toasts.map((t) => {
+            const Icon = TOAST_ICONS[t.type];
+            return (
+              <motion.div
+                key={t.id}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur-sm',
+                  TOAST_STYLES[t.type]
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-foreground">{t.message}</span>
+                <button
+                  onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <XIcon className="h-3.5 w-3.5" />
+                </button>
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
     </ToastContext.Provider>

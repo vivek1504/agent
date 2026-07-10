@@ -4,14 +4,15 @@ import * as SeparatorPrimitive from '@radix-ui/react-separator';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
-// ── Input ──────────────────────────────────────────────────────────
+// ── Input ──────────────────────────────────────────────────────────────
 const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
   ({ className, type, ...props }, ref) => (
     <input
       type={type}
       className={cn(
-        'flex h-9 w-full rounded-md border border-input bg-muted px-3 py-1 text-sm font-mono shadow-sm transition-colors',
-        'file:border-0 file:bg-transparent file:text-sm file:font-medium',
+        'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm',
+        'transition-colors duration-150',
+        'file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground',
         'placeholder:text-muted-foreground',
         'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
         'disabled:cursor-not-allowed disabled:opacity-50',
@@ -24,12 +25,13 @@ const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
 );
 Input.displayName = 'Input';
 
-// ── Textarea ───────────────────────────────────────────────────────
+// ── Textarea ───────────────────────────────────────────────────────────
 const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(
   ({ className, ...props }, ref) => (
     <textarea
       className={cn(
-        'flex min-h-[80px] w-full rounded-md border border-input bg-muted px-3 py-2 text-sm font-mono shadow-sm',
+        'flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm',
+        'transition-colors duration-150',
         'placeholder:text-muted-foreground',
         'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
         'disabled:cursor-not-allowed disabled:opacity-50',
@@ -42,29 +44,33 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttribu
 );
 Textarea.displayName = 'Textarea';
 
-// ── Label ──────────────────────────────────────────────────────────
+// ── Label ──────────────────────────────────────────────────────────────
 const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
 >(({ className, ...props }, ref) => (
   <LabelPrimitive.Root
     ref={ref}
-    className={cn('text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 font-mono text-muted-foreground', className)}
+    className={cn(
+      'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+      className
+    )}
     {...props}
   />
 ));
 Label.displayName = LabelPrimitive.Root.displayName;
 
-// ── Badge ──────────────────────────────────────────────────────────
+// ── Badge ──────────────────────────────────────────────────────────────
 const badgeVariants = cva(
-  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-mono font-semibold transition-colors',
+  'inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium transition-colors',
   {
     variants: {
       variant: {
-        default: 'border-transparent bg-primary/20 text-primary',
+        default: 'border-transparent bg-primary text-primary-foreground shadow',
         secondary: 'border-transparent bg-secondary text-secondary-foreground',
-        destructive: 'border-transparent bg-destructive/20 text-destructive',
-        outline: 'border-border text-muted-foreground',
+        destructive: 'border-transparent bg-destructive text-destructive-foreground shadow',
+        outline: 'border-border text-foreground',
+        success: 'border-transparent bg-success/10 text-success',
       },
     },
     defaultVariants: { variant: 'default' },
@@ -76,10 +82,17 @@ function Badge({ className, variant, ...props }: BadgeProps) {
   return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
 }
 
-// ── Card ───────────────────────────────────────────────────────────
+// ── Card ───────────────────────────────────────────────────────────────
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('rounded-lg border border-border bg-card text-card-foreground shadow-sm', className)} {...props} />
+    <div
+      ref={ref}
+      className={cn(
+        'rounded-lg border border-border bg-card text-card-foreground shadow-sm',
+        className
+      )}
+      {...props}
+    />
   )
 );
 Card.displayName = 'Card';
@@ -93,7 +106,11 @@ CardHeader.displayName = 'CardHeader';
 
 const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
   ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn('text-lg font-semibold leading-none tracking-tight font-mono', className)} {...props} />
+    <h3
+      ref={ref}
+      className={cn('font-semibold leading-none tracking-tight', className)}
+      {...props}
+    />
   )
 );
 CardTitle.displayName = 'CardTitle';
@@ -105,7 +122,7 @@ const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDi
 );
 CardContent.displayName = 'CardContent';
 
-// ── Separator ─────────────────────────────────────────────────────
+// ── Separator ──────────────────────────────────────────────────────────
 const Separator = React.forwardRef<
   React.ElementRef<typeof SeparatorPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>
@@ -124,4 +141,23 @@ const Separator = React.forwardRef<
 ));
 Separator.displayName = SeparatorPrimitive.Root.displayName;
 
-export { Input, Textarea, Label, Badge, badgeVariants, Card, CardHeader, CardTitle, CardContent, Separator };
+// ── Skeleton ───────────────────────────────────────────────────────────
+function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={cn('skeleton', className)} {...props} />
+  );
+}
+
+export {
+  Input,
+  Textarea,
+  Label,
+  Badge,
+  badgeVariants,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Separator,
+  Skeleton,
+};

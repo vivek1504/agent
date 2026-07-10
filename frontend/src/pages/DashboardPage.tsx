@@ -1,13 +1,29 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Database, Trash2, MessageSquare, AlertCircle, Terminal } from 'lucide-react';
+import { Plus, Database, Trash2, ArrowRight, AlertTriangle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/primitives';
-import TetrisLoading from '@/components/TetrisLoading';
+import { Skeleton } from '@/components/ui/primitives';
 import { usePlaygrounds } from '@/hooks/usePlaygrounds';
 import { useToast } from '@/components/ui/toast';
 import { formatDate } from '@/lib/utils';
+
+function CardSkeleton() {
+  return (
+    <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+      <div className="flex items-start justify-between">
+        <div className="space-y-2 flex-1">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+        <Skeleton className="h-8 w-8 rounded-md" />
+      </div>
+      <div className="pt-4 border-t border-border">
+        <Skeleton className="h-3 w-24" />
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { playgrounds, loading, error, remove } = usePlaygrounds();
@@ -29,55 +45,63 @@ export default function DashboardPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <TetrisLoading size="md" speed="fast" loadingText="Loading playgrounds..." />
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+    <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8 py-10">
+      {/* ── Page Header ─────────────────────────────────────────────── */}
+      <div className="flex items-end justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-mono font-bold">Playgrounds</h1>
-          <p className="text-sm text-muted-foreground mt-1 font-mono">
-            {playgrounds.length} database{playgrounds.length !== 1 ? 's' : ''} connected
+          <h1 className="text-2xl font-bold tracking-tight">Playgrounds</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {loading
+              ? 'Loading your databases...'
+              : `${playgrounds.length} database${playgrounds.length !== 1 ? 's' : ''} connected`}
           </p>
         </div>
-        <Button asChild size="sm" className="gap-2">
+        <Button asChild size="sm" className="gap-2" id="new-playground-button">
           <Link to="/new">
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             New Playground
           </Link>
         </Button>
       </div>
 
-      {/* Error */}
+      {/* ── Error State ─────────────────────────────────────────────── */}
       {error && (
-        <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/30 bg-destructive/5 text-destructive text-sm font-mono mb-6">
-          <AlertCircle className="h-4 w-4 shrink-0" />
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-foreground mb-6"
+        >
+          <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
           {error}
+        </motion.div>
+      )}
+
+      {/* ── Loading Skeleton ────────────────────────────────────────── */}
+      {loading && (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
         </div>
       )}
 
-      {/* Empty state */}
-      {!error && playgrounds.length === 0 && (
+      {/* ── Empty State ─────────────────────────────────────────────── */}
+      {!loading && !error && playgrounds.length === 0 && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-24 gap-6"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex flex-col items-center justify-center py-24"
         >
-          <div className="grid-bg h-48 w-full rounded-xl border border-border flex items-center justify-center">
-            <div className="flex flex-col items-center gap-3 text-center">
-              <Terminal className="h-10 w-10 text-primary/40" />
-              <p className="font-mono text-muted-foreground text-sm">No playgrounds yet</p>
-              <p className="font-mono text-muted-foreground/60 text-xs">Connect a database to get started</p>
-            </div>
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-6">
+            <Database className="h-7 w-7 text-muted-foreground" strokeWidth={1.5} />
           </div>
-          <Button asChild className="gap-2">
+          <h3 className="font-semibold text-base mb-1">No playgrounds yet</h3>
+          <p className="text-sm text-muted-foreground mb-6 text-center max-w-sm">
+            Connect a SQL database to start asking questions in plain English.
+          </p>
+          <Button asChild className="gap-2" id="create-first-playground-button">
             <Link to="/new">
               <Plus className="h-4 w-4" />
               Create your first playground
@@ -86,63 +110,74 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      {/* Grid */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <AnimatePresence>
-          {playgrounds.map((pg, i) => (
-            <motion.div
-              key={pg.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ delay: i * 0.05 }}
-              layout
-            >
-              <Card
-                className="group hover:border-primary/30 transition-all cursor-pointer hover:shadow-[0_0_20px_hsl(var(--primary)/0.05)]"
+      {/* ── Playground Cards Grid ───────────────────────────────────── */}
+      {!loading && playgrounds.length > 0 && (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <AnimatePresence>
+            {playgrounds.map((pg, i) => (
+              <motion.div
+                key={pg.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3, delay: i * 0.05 }}
+                layout
                 onClick={() => navigate(`/playground/${pg.id}`)}
+                className="group relative cursor-pointer rounded-xl border border-border bg-card p-6 transition-all duration-200 hover:border-foreground/20 hover:shadow-lg hover:shadow-foreground/[0.03]"
+                id={`playground-card-${pg.id}`}
               >
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-9 w-9 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                        <Database className="h-4 w-4 text-primary" />
+                {/* Card Content */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted shrink-0">
+                        <Database className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-mono font-semibold text-sm truncate">{pg.name}</h3>
-                        <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                        <h3 className="font-medium text-sm truncate">{pg.name}</h3>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                          <Clock className="h-3 w-3" />
                           {formatDate(pg.created_at)}
-                        </p>
+                        </div>
                       </div>
                     </div>
-                    <button
-                      onClick={(e) => handleDelete(e, pg.id)}
-                      disabled={deletingId === pg.id}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
-                    >
-                      {deletingId === pg.id
-                        ? <span className="text-xs font-mono">...</span>
-                        : <Trash2 className="h-3.5 w-3.5" />
-                      }
-                    </button>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
-                      <span className="h-1.5 w-1.5 bg-primary rounded-full" />
-                      Ready
-                    </span>
-                    <span className="flex items-center gap-1 text-xs font-mono text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                      <MessageSquare className="h-3 w-3" />
-                      Open chat
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+                  {/* Delete button */}
+                  <button
+                    onClick={(e) => handleDelete(e, pg.id)}
+                    disabled={deletingId === pg.id}
+                    className="rounded-md p-1.5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-150"
+                    id={`delete-playground-${pg.id}`}
+                  >
+                    {deletingId === pg.id ? (
+                      <motion.div
+                        className="h-3.5 w-3.5 border-2 border-muted-foreground/30 border-t-foreground rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                      />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    )}
+                  </button>
+                </div>
+
+                {/* Footer */}
+                <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="h-2 w-2 rounded-full bg-success pulse-dot" />
+                    Connected
+                  </span>
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-all duration-200 group-hover:translate-x-0 -translate-x-1">
+                    Open
+                    <ArrowRight className="h-3 w-3" />
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }

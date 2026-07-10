@@ -7,21 +7,28 @@ import AuthCallbackPage from '@/pages/AuthCallbackPage';
 import DashboardPage from '@/pages/DashboardPage';
 import NewPlaygroundPage from '@/pages/NewPlaygroundPage';
 import PlaygroundPage from '@/pages/PlaygroundPage';
-import TetrisLoading from '@/components/TetrisLoading';
+import LoadingSpinner from '@/components/TetrisLoading';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 function AppRoutes() {
   const { user, loading, logout } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <TetrisLoading size="md" speed="fast" loadingText="Initialising CompanyBrain..." />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner text="Initializing..." size="lg" />
       </div>
     );
   }
 
   const layout = (children: React.ReactNode) =>
-    user ? <AppLayout user={user} onLogout={logout}>{children}</AppLayout> : <Navigate to="/" replace />;
+    user ? (
+      <AppLayout user={user} onLogout={logout}>
+        {children}
+      </AppLayout>
+    ) : (
+      <Navigate to="/" replace />
+    );
 
   return (
     <Routes>
@@ -37,10 +44,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <ToastProvider>
-        <AppRoutes />
-      </ToastProvider>
-    </BrowserRouter>
+    <ThemeProvider defaultTheme="system" storageKey="sqlwizard-theme">
+      <BrowserRouter>
+        <ToastProvider>
+          <AppRoutes />
+        </ToastProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }

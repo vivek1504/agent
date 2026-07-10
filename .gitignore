@@ -40,3 +40,6 @@ secrets.json
 chroma_db/
 vectorstore/
 pinecone_cache/
+
+
+backend/seed.py

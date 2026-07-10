@@ -4,26 +4,91 @@
 
 @layer base {
   :root {
-    --background: 0 0% 4%;
-    --foreground: 120 8% 90%;
-    --card: 0 0% 6%;
-    --card-foreground: 120 8% 90%;
-    --popover: 0 0% 6%;
-    --popover-foreground: 120 8% 90%;
-    --primary: 142 70% 55%;
-    --primary-foreground: 0 0% 4%;
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 120 8% 80%;
-    --muted: 0 0% 8%;
-    --muted-foreground: 120 4% 50%;
-    --accent: 142 60% 20%;
-    --accent-foreground: 142 70% 75%;
-    --destructive: 0 72% 51%;
+    /* Vercel Light Mode — Pure white, high-contrast grayscale */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 12%;
-    --input: 0 0% 10%;
-    --ring: 142 70% 45%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 9%;
+
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+
     --radius: 0.5rem;
+
+    /* Code block */
+    --code-bg: 0 0% 96.5%;
+    --code-border: 0 0% 90%;
+
+    /* Subtle glow for landing */
+    --glow: 0 0% 0%;
+  }
+
+  .dark {
+    /* Vercel Dark Mode — Pure black, sharp contrast */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 9%;
+
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+
+    --code-bg: 0 0% 6%;
+    --code-border: 0 0% 14%;
+
+    --glow: 0 0% 100%;
   }
 }
 
@@ -31,79 +96,128 @@
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    background-image:
-      radial-gradient(ellipse at 20% 0%, rgba(34, 197, 94, 0.04) 0%, transparent 60%),
-      radial-gradient(ellipse at 80% 100%, rgba(34, 197, 94, 0.03) 0%, transparent 60%);
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01", "ss03";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* Scanline effect for terminal feel */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
+/* ── Scrollbar — Minimal Vercel-style ─────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+/* ── Selection ────────────────────────────────────────────────────── */
+::selection {
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+}
+
+/* ── Dot grid pattern for landing page ────────────────────────────── */
+.dot-pattern {
+  background-image: radial-gradient(
+    circle,
+    hsl(var(--foreground) / 0.08) 1px,
+    transparent 1px
   );
-  pointer-events: none;
-  z-index: 9999;
+  background-size: 24px 24px;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: hsl(var(--background)); }
-::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.5); }
-
-/* Terminal cursor blink */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-.cursor-blink::after {
-  content: '█';
-  animation: blink 1s step-end infinite;
-  color: hsl(var(--primary));
-  font-size: 0.8em;
+/* ── Terminal glow effect ─────────────────────────────────────────── */
+.terminal-glow {
+  box-shadow:
+    0 0 0 1px hsl(var(--border)),
+    0 4px 6px -1px hsl(var(--glow) / 0.03),
+    0 2px 4px -2px hsl(var(--glow) / 0.03),
+    0 0 60px -12px hsl(var(--glow) / 0.08);
 }
 
-/* Green glow text */
-.text-glow {
-  text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
-}
-
-/* Code block */
+/* ── Code block styling ───────────────────────────────────────────── */
 .code-block {
-  font-family: 'JetBrains Mono', monospace;
-  background: hsl(var(--muted));
-  border: 1px solid hsl(var(--border));
-  border-radius: 6px;
-  padding: 1rem;
-  font-size: 0.8rem;
-  line-height: 1.6;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  background: hsl(var(--code-bg));
+  border: 1px solid hsl(var(--code-border));
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
+  tab-size: 2;
 }
 
-/* Answer reveal animation */
-@keyframes typeIn {
+/* ── SQL syntax highlighting ──────────────────────────────────────── */
+.sql-keyword { color: #c678dd; font-weight: 600; }
+.sql-function { color: #61afef; }
+.sql-string { color: #98c379; }
+.sql-number { color: #d19a66; }
+.sql-operator { color: #56b6c2; }
+.sql-comment { color: hsl(var(--muted-foreground)); font-style: italic; }
+
+/* ── Pulsing status dot ───────────────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.pulse-dot {
+  animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ── Skeleton loading shimmer ─────────────────────────────────────── */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: hsl(var(--muted));
+  border-radius: calc(var(--radius) - 2px);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--foreground) / 0.04),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+/* ── Smooth page transitions ──────────────────────────────────────── */
+@keyframes fade-in {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.answer-line {
-  animation: typeIn 0.2s ease-out forwards;
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
 }
 
-/* Grid pattern background for cards */
-.grid-bg {
-  background-image:
-    linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
-  background-size: 20px 20px;
+/* ── Focus ring utility ───────────────────────────────────────────── */
+.focus-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
 }

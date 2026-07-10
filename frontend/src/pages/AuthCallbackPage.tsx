@@ -18,7 +18,7 @@ export default function AuthCallbackPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-6">
-      <TetrisLoading size="md" speed="fast" loadingText="Authenticating with GitHub..." />
+      <TetrisLoading text="Authenticating" />
     </div>
   );
 }
