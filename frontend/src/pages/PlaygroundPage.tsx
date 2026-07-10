@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, ArrowLeft, AlertTriangle, MessageSquare, FileUp } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, MessageSquare, FileUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/TetrisLoading';
 import ChatInterface from '@/components/ChatInterface';
